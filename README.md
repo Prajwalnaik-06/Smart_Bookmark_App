@@ -1,36 +1,226 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
 
-First, run the development server:
+# 📌 Smart Bookmark App
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+A full-stack real-time bookmark manager built with **Next.js (App Router)** and **Supabase**.
+
+Users can securely log in using Google OAuth, add personal bookmarks, and see real-time updates across multiple tabs.
+
+---
+
+## 🚀 Live Demo
+
+Deployed on: Vercel
+👉 [https://your-vercel-link.vercel.app](https://your-vercel-link.vercel.app)
+
+---
+
+## 🛠 Tech Stack
+
+* **Frontend:** Next.js (App Router)
+* **Backend & Database:** Supabase
+* **Authentication:** Supabase Google OAuth
+* **Styling:** Tailwind CSS
+* **Deployment:** Vercel
+
+---
+
+## ✨ Features
+
+* 🔐 Google OAuth Login
+* ➕ Add bookmarks
+* 🗑 Delete bookmarks
+* 🔒 User-specific private data (Row Level Security)
+* ⚡ Real-time updates (auto refresh across tabs)
+* 📱 Responsive UI
+
+---
+
+## 📂 Project Structure
+
+```
+smart-bookmark-app/
+│
+├── app/
+│   ├── page.tsx
+│   ├── dashboard/page.tsx
+│   └── layout.tsx
+│
+├── components/
+│   ├── Navbar.tsx
+│   ├── BookmarkForm.tsx
+│   ├── BookmarkList.tsx
+│   └── BookmarkItem.tsx
+│
+├── hooks/
+│   └── useBookmarks.ts
+│
+├── lib/
+│   └── supabaseClient.ts
+│
+├── types/
+│   └── bookmark.ts
+│
+└── .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🗄 Database Schema
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sql
+create table bookmarks (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users on delete cascade,
+  title text not null,
+  url text not null,
+  created_at timestamp default now()
+);
+```
 
-## Learn More
+### 🔐 Row Level Security (RLS)
 
-To learn more about Next.js, take a look at the following resources:
+```sql
+alter table bookmarks enable row level security;
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+create policy "Users can view own bookmarks"
+on bookmarks for select
+using (auth.uid() = user_id);
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+create policy "Users can insert own bookmarks"
+on bookmarks for insert
+with check (auth.uid() = user_id);
 
-## Deploy on Vercel
+create policy "Users can delete own bookmarks"
+on bookmarks for delete
+using (auth.uid() = user_id);
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔑 Authentication Flow
+
+1. User clicks **Login with Google**
+2. Redirected to Google OAuth
+3. Supabase handles authentication
+4. User session stored securely
+5. Dashboard loads private bookmarks
+
+---
+
+## ⚡ Real-Time Implementation
+
+Supabase Realtime is enabled on the `bookmarks` table.
+
+The app subscribes to:
+
+```ts
+supabase.channel("realtime bookmarks")
+  .on("postgres_changes", { event: "*", schema: "public", table: "bookmarks" }, fetchBookmarks)
+  .subscribe();
+```
+
+This ensures instant updates when:
+
+* A bookmark is added
+* A bookmark is deleted
+
+---
+
+## ⚙️ Environment Variables
+
+Create `.env.local` in root:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+```
+
+Get these from:
+
+Supabase → Settings → API
+
+---
+
+## 🧪 How To Run Locally
+
+```bash
+git clone https://github.com/your-username/smart-bookmark-app.git
+cd smart-bookmark-app
+npm install
+npm run dev
+```
+
+Open:
+
+```
+http://localhost:3000
+```
+
+---
+
+## 🚀 Deployment
+
+1. Push project to GitHub
+2. Import into Vercel
+3. Add environment variables
+4. Deploy
+
+---
+
+## 🛑 Problems Faced & Solutions
+
+### 1️⃣ Google OAuth Redirect Error
+
+**Problem:** redirect_uri_mismatch
+**Solution:** Added correct Supabase callback URL in Google Cloud Console.
+
+---
+
+### 2️⃣ Row Level Security Blocking Queries
+
+**Problem:** Data not visible after insert
+**Solution:** Added proper RLS policies for select, insert, delete.
+
+---
+
+### 3️⃣ Realtime Not Working
+
+**Problem:** Updates not reflecting
+**Solution:** Enabled replication for bookmarks table in Supabase.
+
+---
+
+
+## 📈 Future Improvements
+
+* ✏️ Edit bookmarks
+* 🔍 Search functionality
+* 🏷 Tag-based filtering
+* 📊 Analytics dashboard
+* 🌙 Dark mode
+* 🧪 Unit testing
+
+---
+
+## 🎯 Assignment Requirements Checklist
+
+| Requirement       | Status |
+| ----------------- | ------ |
+| Google OAuth only | ✅      |
+| Add bookmark      | ✅      |
+| Delete bookmark   | ✅      |
+| Private per user  | ✅      |
+| Real-time updates | ✅      |
+| Hosted online     | ✅      |
+
+---
+
+## 👨‍💻 Author
+
+**Prajwal Naik**
+Built as part of a full-stack development assignment.
+
+---
+
+
